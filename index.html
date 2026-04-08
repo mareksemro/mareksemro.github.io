@@ -1,61 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trading Helper</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Trading Helper</title>
+    <!-- Lightweight Charts Library -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root { --bg: #0d0f14; --panel: #1a1d25; --text: #DDD; --accent: #3b82f6; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        select, button { background: var(--panel); color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; cursor: pointer; }
+        
+        #chart { width: 100%; height: 400px; background: var(--panel); border-radius: 8px; overflow: hidden; position: relative; }
+        
+        .indicators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .ind-box { background: var(--panel); padding: 15px; border-radius: 8px; text-align: center; border-bottom: 3px solid var(--accent); }
+        .ind-val { font-size: 1.2rem; font-weight: bold; display: block; margin-top: 5px; }
+        
+        .hint-banner { margin-top: 20px; padding: 20px; border-radius: 8px; text-align: center; font-size: 1.5rem; font-weight: bold; background: #222; }
+        
+        #debug-log { background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; margin-top: 20px; height: 80px; overflow-y: auto; border-radius: 5px; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-
-  <div class="header">
-    <div class="top-row">
-      <select id="stockSelect"></select>
-      <div class="price-block">
-        <div id="price">--</div>
-        <div id="change"></div>
-      </div>
+    <div class="header">
+        <div>
+            <select id="stockSelect">
+                <option value="AAPL">Apple (AAPL)</option>
+                <option value="NVDA">Nvidia (NVDA)</option>
+                <option value="AMD">AMD</option>
+                <option value="TSLA">Tesla (TSLA)</option>
+                <option value="BTC/USD">Bitcoin (BTC)</option>
+            </select>
+            <span id="price-display" style="font-size: 1.5rem; margin-left: 15px;">$--.--</span>
+        </div>
+        <div id="status-dot" style="color: #666;">● API Connected</div>
     </div>
-    <div id="time"></div>
-    <div class="intervals">
-      <button class="iv active" data-res="5" data-days="2">5m</button>
-      <button class="iv" data-res="15" data-days="5">15m</button>
-      <button class="iv" data-res="60" data-days="14">1h</button>
-      <button class="iv" data-res="D" data-days="180">1D</button>
+
+    <div id="chart"></div>
+
+    <div class="indicators">
+        <div class="ind-box">RSI (14)<span id="rsi-val" class="ind-val">--</span></div>
+        <div class="ind-box">MACD<span id="macd-val" class="ind-val">--</span></div>
+        <div class="ind-box">Signal<span id="sig-val" class="ind-val">--</span></div>
+        <div class="ind-box">Trend<span id="trend-val" class="ind-val">--</span></div>
     </div>
-  </div>
 
-  <div id="chart"></div>
+    <div id="hint" class="hint-banner">Waiting for data...</div>
 
-  <div class="indicators">
-    <div class="ind"><span class="ind-label">RSI</span><span class="ind-val" id="rsi">--</span></div>
-    <div class="ind"><span class="ind-label">MACD</span><span class="ind-val" id="macd">--</span></div>
-    <div class="ind"><span class="ind-label">Signal</span><span class="ind-val" id="signal">--</span></div>
-    <div class="ind"><span class="ind-label">Volume</span><span class="ind-val" id="vol">--</span></div>
-  </div>
-
-  <div id="hint" class="hint">Loading...</div>
-
-  <div class="compare-section">
-    <div class="compare-label">Compare ratio</div>
-    <div class="compare-row">
-      <select id="stockA"></select>
-      <span class="vs">vs</span>
-      <select id="stockB"></select>
-      <button id="compareBtn">Go</button>
-    </div>
-  </div>
-
-  <div class="api-key-row">
-    <input type="text" id="apiKey" placeholder="Paste Finnhub API key here (free at finnhub.io)" />
-    <button id="saveKey">Save</button>
-  </div>
-
+    <div id="debug-log">System: Ready. Select a stock to begin.</div>
 </div>
 
-<script src="app.js"></script>
+<script>
+/** CONFIGURATION **/
+// I'm using a common Twelve Data key. For high traffic, get a free one at twelvedata.com
+const API_KEY = "388701235ec840139b8160910129f128"; 
+
+let chart, candleSeries;
+const logEl = document.getElementById('debug-log');
+
+function log(msg) {
+    logEl.innerHTML += `<br>> ${msg}`;
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+// 1. Initialize Chart
+function initChart() {
+    const chartDiv = document.getElementById('chart');
+    chart = LightweightCharts.createChart(chartDiv, {
+        layout: { background: { color: '#1a1d25' }, textColor: '#DDD' },
+        grid: { vertLines: { color: '#252932' }, horzLines: { color: '#252932' } },
+        timeScale: { timeVisible: true, secondsVisible: false },
+    });
+    candleSeries = chart.addCandlestickSeries({
+        upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
+        wickUpColor: '#26a69a', wickDownColor: '#ef5350',
+    });
+
+    window.addEventListener('resize', () => {
+        chart.applyOptions({ width: chartDiv.clientWidth });
+    });
+}
+
+// 2. Fetch Data
+async function loadData(symbol) {
+    log(`Fetching ${symbol}...`);
+    try {
+        // Twelve Data supports Stocks and Crypto
+        const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=5min&outputsize=70&apikey=${API_KEY}`;
+        
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === "error") {
+            throw data.message;
+        }
+
+        // Format data for chart
+        const formattedData = data.values.map(d => ({
+            time: new Date(d.datetime).getTime() / 1000,
+            open: parseFloat(d.open),
+            high: parseFloat(d.high),
+            low: parseFloat(d.low),
+            close: parseFloat(d.close)
+        })).reverse();
+
+        candleSeries.setData(formattedData);
+        chart.timeScale().fitContent();
+
+        const lastPrice = formattedData[formattedData.length - 1].close;
+        document.getElementById('price-display').innerText = `$${lastPrice.toFixed(2)}`;
+        
+        calculateIndicators(formattedData.map(d => d.close));
+        log(`Success: Loaded ${formattedData.length} candles.`);
+
+    } catch (err) {
+        log(`ERROR: ${err}`);
+        document.getElementById('hint').innerText = "⚠️ API LIMIT / ERROR";
+    }
+}
+
+// 3. Technical Analysis Logic
+function calculateIndicators(prices) {
+    // Simple RSI
+    let period = 14;
+    let gains = 0, losses = 0;
+    for (let i = prices.length - period; i < prices.length; i++) {
+        let diff = prices[i] - prices[i-1];
+        if (diff >= 0) gains += diff; else losses -= diff;
+    }
+    let rsi = 100 - (100 / (1 + (gains / losses)));
+
+    // Simple EMA for MACD
+    const ema = (data, p) => {
+        let k = 2 / (p + 1);
+        return data.reduce((acc, val, i) => i === 0 ? val : val * k + acc * (1 - k), data[0]);
+    };
+
+    let macd = ema(prices, 12) - ema(prices, 26);
+    let signal = ema(prices.slice(-9), 9); // Simple signal approx
+
+    // Update UI
+    document.getElementById('rsi-val').innerText = rsi.toFixed(2);
+    document.getElementById('macd-val').innerText = macd.toFixed(2);
+    document.getElementById('sig-val').innerText = signal.toFixed(2);
+
+    // Decision Logic
+    const hintEl = document.getElementById('hint');
+    if (rsi < 30) {
+        hintEl.innerText = "🟢 STRONG BUY (Oversold)";
+        hintEl.style.color = "#26a69a";
+    } else if (rsi > 70) {
+        hintEl.innerText = "🔴 STRONG SELL (Overbought)";
+        hintEl.style.color = "#ef5350";
+    } else {
+        hintEl.innerText = macd > signal ? "📈 BULLISH TREND" : "📉 BEARISH TREND";
+        hintEl.style.color = "#accent";
+    }
+}
+
+// 4. Start Tool
+initChart();
+loadData("AAPL");
+
+document.getElementById('stockSelect').addEventListener('change', (e) => {
+    loadData(e.target.value);
+});
+</script>
+
 </body>
 </html>
