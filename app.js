@@ -10,7 +10,7 @@ const STOCKS = [
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let apiKey = localStorage.getItem("finnhub_key") || "";
+let apiKey = "d7b665hr01ql9e4lfeg0d7b665hr01ql9e4lfegg";
 let currentSymbol = "NVDA";
 let currentRes = "5";
 let currentDays = 2;
