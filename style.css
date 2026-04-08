@@ -13,7 +13,6 @@ body {
 
 .header {
     text-align: center;
-    margin-bottom: 10px;
 }
 
 select {
@@ -27,7 +26,7 @@ select {
 }
 
 #price {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: bold;
 }
 
@@ -37,20 +36,33 @@ select {
 }
 
 #chart {
-    height: 300px;
+    height: 320px;
     margin-top: 10px;
 }
 
 .indicators {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     margin-top: 10px;
+    gap: 6px;
 }
 
 .indicators div {
+    flex: 1;
     background: #1a1d25;
     padding: 10px;
     border-radius: 12px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.hint {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    background: #1a1d25;
+    font-weight: bold;
 }
 
 .compare {
@@ -59,7 +71,7 @@ select {
 
 button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     border-radius: 12px;
     border: none;
     background: #2962ff;
