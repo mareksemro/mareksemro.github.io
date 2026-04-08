@@ -1,10 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Test Page</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Helper</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
+
 <body>
-    <h1>Test Page</h1>
-    <p>Hello!  If you can see this, GitHub Pages is working.</p>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <select id="stockSelect"></select>
+        <div id="price">Loading...</div>
+        <div id="time"></div>
+    </div>
+
+    <!-- CHART -->
+    <div id="chart"></div>
+
+    <!-- INDICATORS -->
+    <div class="indicators">
+        <div id="rsi">RSI: -</div>
+    </div>
+
+    <!-- COMPARE -->
+    <div class="compare">
+        <select id="stockA"></select>
+        <select id="stockB"></select>
+        <button onclick="compare()">Compare</button>
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+
 </body>
 </html>
