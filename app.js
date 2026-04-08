@@ -33,29 +33,41 @@ select.addEventListener("change", () => {
 });
 
 async function loadStock(symbol) {
-    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=1d`);
-    const data = await res.json();
+    try {
+        document.getElementById("price").innerText = "Loading...";
 
-    const result = data.chart.result[0];
-    const q = result.indicators.quote[0];
-    const times = result.timestamp;
+        const res = await fetch(
+            `https://financialmodelingprep.com/api/v3/historical-chart/5min/${symbol}?apikey=demo`
+        );
 
-    let candles = times.map((t, i) => ({
-        time: t,
-        open: q.open[i],
-        high: q.high[i],
-        low: q.low[i],
-        close: q.close[i]
-    }));
+        const data = await res.json();
 
-    candleSeries.setData(candles);
+        if (!data || data.length === 0) throw "No data";
 
-    const lastPrice = q.close[q.close.length - 1];
-    document.getElementById("price").innerText = "€ " + lastPrice.toFixed(2);
-    document.getElementById("time").innerText =
-        new Date(times[times.length - 1] * 1000).toLocaleTimeString();
+        let candles = data.slice(0, 100).map(d => ({
+            time: Math.floor(new Date(d.date).getTime() / 1000),
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close
+        })).reverse();
 
-    calculateIndicators(q.close);
+        candleSeries.setData(candles);
+
+        const closes = candles.map(c => c.close);
+        const lastPrice = closes[closes.length - 1];
+
+        document.getElementById("price").innerText = "€ " + lastPrice.toFixed(2);
+        document.getElementById("time").innerText =
+            new Date(candles[candles.length - 1].time * 1000).toLocaleTimeString();
+
+        calculateIndicators(closes);
+
+    } catch (err) {
+        console.log(err);
+        document.getElementById("price").innerText = "⚠️ API error";
+        document.getElementById("hint").innerText = "Retrying...";
+    }
 }
 
 // RSI
