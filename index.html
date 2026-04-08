@@ -3,48 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Trading Helper</title>
-
-<!-- FORCE CSS LOAD -->
-<link rel="stylesheet" href="./style.css?v=2">
-
+<link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
 <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">
-        <select id="stockSelect"></select>
-        <div id="price">Loading...</div>
-        <div id="time"></div>
+  <div class="header">
+    <div class="top-row">
+      <select id="stockSelect"></select>
+      <div class="price-block">
+        <div id="price">--</div>
+        <div id="change"></div>
+      </div>
     </div>
-
-    <!-- CHART -->
-    <div id="chart"></div>
-
-    <!-- INDICATORS -->
-    <div class="indicators">
-        <div id="rsi">RSI: -</div>
-        <div id="macd">MACD: -</div>
-        <div id="signal">Signal: -</div>
+    <div id="time"></div>
+    <div class="intervals">
+      <button class="iv active" data-res="5" data-days="2">5m</button>
+      <button class="iv" data-res="15" data-days="5">15m</button>
+      <button class="iv" data-res="60" data-days="14">1h</button>
+      <button class="iv" data-res="D" data-days="180">1D</button>
     </div>
+  </div>
 
-    <!-- SIGNAL BOX -->
-    <div id="hint" class="hint">Waiting for data...</div>
+  <div id="chart"></div>
 
-    <!-- COMPARE -->
-    <div class="compare">
-        <select id="stockA"></select>
-        <select id="stockB"></select>
-        <button onclick="compare()">Compare</button>
+  <div class="indicators">
+    <div class="ind"><span class="ind-label">RSI</span><span class="ind-val" id="rsi">--</span></div>
+    <div class="ind"><span class="ind-label">MACD</span><span class="ind-val" id="macd">--</span></div>
+    <div class="ind"><span class="ind-label">Signal</span><span class="ind-val" id="signal">--</span></div>
+    <div class="ind"><span class="ind-label">Volume</span><span class="ind-val" id="vol">--</span></div>
+  </div>
+
+  <div id="hint" class="hint">Loading...</div>
+
+  <div class="compare-section">
+    <div class="compare-label">Compare ratio</div>
+    <div class="compare-row">
+      <select id="stockA"></select>
+      <span class="vs">vs</span>
+      <select id="stockB"></select>
+      <button id="compareBtn">Go</button>
     </div>
+  </div>
+
+  <div class="api-key-row">
+    <input type="text" id="apiKey" placeholder="Paste Finnhub API key here (free at finnhub.io)" />
+    <button id="saveKey">Save</button>
+  </div>
 
 </div>
 
 <script src="app.js"></script>
-
 </body>
 </html>
